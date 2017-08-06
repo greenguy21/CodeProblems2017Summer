@@ -100,43 +100,44 @@ void postorderInline(struct treeNode* node) {
 	printf("postorder:\n");
 
 	//Initializing and priming the stack
-	std::stack<struct treeNode*> nstack;
-	std::stack<struct treeNode*> pstack;
-	struct treeNode* curr = node;
-	int count = 0;
-	bool stackvar = true;
-	while (stackvar || curr != NULL) {
-		if (curr == NULL) {
-			if (nstack.top() == NULL) {
-				nstack.pop();
-				curr = nstack.top();
-				nstack.pop();
-				printf("%d, ", curr->val);
-				pstack.push(curr);
+	std::stack<struct treeNode*> nstack; //maintain traversal history for backtracking
+	struct treeNode* lastPrinted = NULL; //maintain the last visited node to handle revisitation cases
+	struct treeNode* curr = node; //maintains current node of concern
+	bool stackvar = true; //variable that maintains the empty state of the nstack. Necessary for proper function as of now. Could be optimized out.
+	while (stackvar || curr != NULL) { //End case is the stack is empty AND the current node is NULL
+		if (curr == NULL) { //Case where traversal has reached a NULLterminated leaf node
+			if (nstack.top() == NULL) { //When the traversal has reached a leaf, 
+										//it should be that the right node added to the tree is NULL, 
+										//in which case, printing should occur
+				nstack.pop(); //Remove the NULL
+				curr = nstack.top(); //Set the current node to be the Leaf node (the next node on the stack)
+				nstack.pop(); //Remove that node from the stack.
+				printf("%d, ", curr->val); //Print the value (could be replaced by whatever ordered recording functionality is desired)
+				lastPrinted = curr; //Maintain that the last 
+
 			}
-			//Top of nstack != NULL
-			curr = nstack.top();
-			nstack.pop();
+			curr = nstack.top(); //Set up state (current node) for next step
+			nstack.pop(); //remove current node from stack
 		}
 		else {
-			if (!pstack.empty() && pstack.top() == curr->right) {
-				printf("%d, ", curr->val);
-				pstack.push(curr);
-				if (!nstack.empty()) {
-					curr = nstack.top();
-					nstack.pop();
+			if (lastPrinted != NULL &&  lastPrinted == curr->right) { //Case where node's children have already been printed and node needs to be printed
+				printf("%d, ", curr->val); //Print current node
+				lastPrinted = curr; //maintain last printed node
+				if (!nstack.empty()) { //check that current node isn't root node (there is nothing left in the stack to backtrace)
+					curr = nstack.top(); //set new current node
+					nstack.pop(); //remove newly-set current node from stack
 				}
-				else curr = NULL;
+				else curr = NULL; //if reached the end of the stack, current must be set to NULL to break out of loop
 			}
-			else {
-				nstack.push(curr);
-				nstack.push(curr->right);
-				curr = curr->left;
+			else { //Case where current node's children haven't all been printed
+				nstack.push(curr); //maintain backtracking stack and continue traversal
+				nstack.push(curr->right); //Important to add the sibling of the node to-be visited last to stack for proper post-order functionality
+				curr = curr->left; //traverse left (left-first post-order traversal) to reach leaf nodes
 			}
 		}
-		stackvar = !nstack.empty();
+		stackvar = !nstack.empty(); //maintain the stack.empty check variable
 	}
-	printf("\n");
+	printf("\n"); //finish up traversal and printing with a newline for good measure.
 }
 
 void BFT(struct treeNode* node) {
